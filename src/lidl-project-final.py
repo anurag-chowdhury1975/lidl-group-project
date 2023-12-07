@@ -1,8 +1,6 @@
 import json
 import requests
-import yaml
 import pandas as pd
-import math
 import time
 import plotly.express as px
 import plotly.graph_objects as go
@@ -10,7 +8,7 @@ from math import cos, asin, sqrt, pi
 import streamlit as st
 from copy import deepcopy
 
-gmaps_key = st.secrets.api_keys.gmaps_key
+gmaps_key = st.secrets["gmaps_key"]
 
 url = "https://maps.googleapis.com/maps/api/place/textsearch/json?"
 
@@ -267,7 +265,7 @@ df_sum_labour = df_labour.dropna().groupby(['Name', 'Jahr']).agg({'unemp_rate': 
 df_data = df_population.merge(df_sum_labour)
 
 
-st.title("Ditribution of competing supermarket stores in Munich")
+st.title("Supermarket stores in Munich")
 st.header("Lidl stores shown in Red, and aldi stores in Gold")
 
 show_data = st.checkbox(label="Include data table with visual")
