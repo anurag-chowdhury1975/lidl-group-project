@@ -207,7 +207,7 @@ def convert_str_float(str_series):
             float_vals.append(s)
     return float_vals
 
-@st.cache_data
+#@st.cache_data
 def search_google_places(search_str):
     next_page_token = ""
     search_data = []
