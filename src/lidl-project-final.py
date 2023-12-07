@@ -240,19 +240,19 @@ aldi_df = search_google_places(search_str="aldi")
 
 
 # Import the GeoJson data for Munich
-with open("../data/neighbourhoods_munich.geojson") as response:
+with open("./data/neighbourhoods_munich.geojson") as response:
     munich = json.load(response)
 
 # Import data we collected from https://www.muenchen.de/
 # Import Unemployment Data and filter for unemployment rate and male and female records only
-df1 = pd.read_csv("../data/export_ar.csv")
+df1 = pd.read_csv("./data/export_ar.csv")
 df_labour = df1[
                 (df1['Indikator'] == "Arbeitslose - Anteil") & 
                 ((df1['Name Basiswert 1'] == "Arbeitslose (männlich)") | (df1['Name Basiswert 1'] == "Arbeitslose (weiblich)"))
                 ]
 
 # Import Population Data
-df2 = pd.read_csv("../data/export_be.csv")
+df2 = pd.read_csv("./data/export_be.csv")
 df_population = df2[df2['Indikator'] == "Bevölkerungsdichte"]
 
 df_population['population'] = convert_str_float(df_population['Indikatorwert'])
