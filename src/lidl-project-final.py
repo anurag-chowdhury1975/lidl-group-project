@@ -10,8 +10,7 @@ from math import cos, asin, sqrt, pi
 import streamlit as st
 from copy import deepcopy
 
-key_dict = {'gmaps_key' : 'AIzaSyCthL9IcQfZDiIe2_bt0LTZQJTVkDeKR2U'} 
-gmaps_key = key_dict["gmaps_key"]
+gmaps_key = st.secrets.api_keys.gmaps_key
 
 url = "https://maps.googleapis.com/maps/api/place/textsearch/json?"
 
@@ -32,7 +31,7 @@ def lat_lon_distance(lat1, lon1, lat2, lon2):
 
 # function to convert a zip code returned from Google maps to a District so we can join with other data based on the distrtict if needed
 
-def map_dist(zip):
+def map_zip_dist(zip):
     zip_dist_dict = {
         80995 : 'Allach-Untermenzing',
         80997 : 'Allach-Untermenzing',
@@ -165,7 +164,7 @@ def map_dist(zip):
     }
     return zip_dist_dict.get(zip)
 
-def map_dist(geo_dist_series): 
+def map_geo_dist(row): 
     dist_dict = {
         "23 Allach - Untermenzing" : "Allach-Untermenzing",
         "01 Altstadt - Lehel" : "Altstadt-Lehel",
@@ -193,10 +192,7 @@ def map_dist(geo_dist_series):
         "15 Trudering - Riem" : "Trudering-Riem",
         "18 Untergiesing - Harlaching" : "Untergiesing-Harlaching",
     }
-    mapped_dist = []
-    for dist in geo_dist_series:
-        mapped_dist.append(dist_dict.get(dist))
-    return mapped_dist
+    return dist_dict.get(row['Raumbezug'])
 
 def convert_str_float(str_series):
     float_vals = []
@@ -207,7 +203,7 @@ def convert_str_float(str_series):
             float_vals.append(s)
     return float_vals
 
-#@st.cache_data
+@st.cache_data
 def search_google_places(search_str):
     next_page_token = ""
     search_data = []
@@ -225,7 +221,7 @@ def search_google_places(search_str):
             name = result.get('name')
             address = result.get('formatted_address')
             zip = result.get('formatted_address').split(', ')[1].split()[0]
-            district = map_dist(int(zip))
+            district = map_zip_dist(int(zip))
             lat = result.get('geometry').get('location').get('lat')
             lng = result.get('geometry').get('location').get('lng')
             dist_from_center = lat_lon_distance(center_lat, center_lng, result.get('geometry').get('location').get('lat'), result.get('geometry').get('location').get('lng'))
@@ -260,12 +256,12 @@ df2 = pd.read_csv("../data/export_be.csv")
 df_population = df2[df2['Indikator'] == "Bevölkerungsdichte"]
 
 df_population['population'] = convert_str_float(df_population['Indikatorwert'])
-df_population['Name'] = map_dist(df_population['Raumbezug'])
+df_population['Name'] = df_population.apply(map_geo_dist, axis=1)
 #df_sum_pop = df_population.dropna().groupby(['Name', 'Jahr']).agg({'pop_density': 'sum'}).reset_index()
 df_population.dropna().reset_index()
 
 df_labour['unemp_rate'] = convert_str_float(df_labour['Indikatorwert'])
-df_labour['Name'] = map_dist(df_labour['Raumbezug'])
+df_labour['Name'] = df_labour.apply(map_geo_dist, axis=1)
 df_sum_labour = df_labour.dropna().groupby(['Name', 'Jahr']).agg({'unemp_rate': 'mean'}).reset_index()
 
 df_data = df_population.merge(df_sum_labour)
@@ -279,10 +275,14 @@ left_column, right_column = st.columns([1,1])
 metric = left_column.radio(label='Metric:', options=['Population','Unemployment Rate'])
 metric_year = right_column.selectbox(label="As of Year", options=sorted(pd.unique(df_data["Jahr"]), reverse=True))
 
-color_df_field = lambda metric : "population" if metric == "Population" else "unemp_rate"
-color_scale = lambda metric : "Blues" if metric == "Population" else "Mint"
+if metric == "Population":
+    color_df_field = "population"
+    color_scale = "Blues"
+else:
+    color_df_field = "unemp_rate"
+    color_scale = "Mint"
 
-df_filtered = df_data[df_data['Jahr'] == metric_year]
+df_filtered = df_data[df_data['Jahr'] == metric_year][["Indikator","Jahr","Name","population","unemp_rate"]]
 fig = px.choropleth_mapbox(df_filtered , geojson=munich,
                         color = color_df_field,
                         color_continuous_scale = color_scale,
