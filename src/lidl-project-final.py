@@ -8,8 +8,7 @@ from math import cos, asin, sqrt, pi
 import streamlit as st
 from copy import deepcopy
 
-#gmaps_key = st.secrets["gmaps_key"]
-gmaps_key = "AIzaSyCthL9IcQfZDiIe2_bt0LTZQJTVkDeKR2U"
+gmaps_key = st.secrets["gmaps_key"]
 
 url = "https://maps.googleapis.com/maps/api/place/textsearch/json?"
 
